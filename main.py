@@ -7,6 +7,7 @@ import numpy as np
 from functools import partial
 from tkinter import *
 from tkinter.filedialog import asksaveasfile
+from tkinter.filedialog import askopenfile
 
 from matplotlib import pyplot as plt
 
@@ -26,8 +27,10 @@ class Entries:
         self.parent_window = parent_window
 
     # adding of new entry (добавление нового текстового поля)
-    def add_entry(self):
+    def add_entry(self, text=""):
+        # so now i can create entries with the text
         new_entry = Entry(self.parent_window)
+        new_entry.insert(0, text)
         new_entry.icursor(0)
         new_entry.focus()
         new_entry.pack()
@@ -177,6 +180,17 @@ class Commands:
         self._state.save_state()
         return self
 
+    def load_from(self):
+        file = askopenfile()
+        if file:
+            for entry in self.parent_window.entries.entries_list:
+                entry.destroy()
+            self.parent_window.entries.entries_list = []
+
+            for entry in json.load(file)['list_of_function']:
+                self.parent_window.entries.add_entry(entry)
+            self.parent_window.commands.plot()
+
 
 # class for buttons storage (класс для хранения кнопок)
 class Buttons:
@@ -223,7 +237,6 @@ class ModalWindow:
         entries_list.pop(entries_list.index(entry)).destroy()
 
 
-
 # app class (класс приложения)
 class App(Tk):
     def __init__(self, buttons, plotter, commands, entries):
@@ -256,6 +269,7 @@ class App(Tk):
 
         file_menu = Menu(menu)
         file_menu.add_command(label="Save as...", command=self.commands.get_command_by_name('save_as'))
+        file_menu.add_command(label="Load from...", command=self.commands.get_command_by_name('load_from'))
         menu.add_cascade(label="File", menu=file_menu)
 
 
@@ -274,6 +288,7 @@ if __name__ == "__main__":
     commands_main.add_command('add_func', commands_main.add_func)
     commands_main.add_command('save_as', commands_main.save_as)
     commands_main.add_command('remove_func', commands_main.remove_func)
+    commands_main.add_command('load_from', commands_main.load_from)
     # init app (создаем экземпляр приложения)
     app = App(buttons_main, plotter_main, commands_main, entries_main)
     # init add func button (добавляем кнопку добавления новой функции)
